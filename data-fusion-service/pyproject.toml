@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "data-fusion-hub-api"
+version = "0.1.0"
+description = "Data Fusion Hub Service API"
+authors = [{ name = "Data Fusion Hub Team" }]
+readme = "README.md"
+requires-python = ">=3.12"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "fastapi==0.121.3",
+    "uvicorn[standard]==0.38.0",
+    "pydantic>=2.7.0,<3.0.0",
+    "psycopg2-binary==2.9.11",
+    "sqlalchemy==2.0.44",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==9.0.1",
+    "pytest-asyncio==1.3.0",
+    "httpx==0.28.1",
+    "black==25.11.0",
+    "flake8==7.0.0",
+    "isort==7.0.0",
+]
+
+[project.scripts]
+data-fusion-hub-api = "app.main:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.black]
+line-length = 88
+target-version = ['py312']
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
