@@ -1,184 +1,58 @@
 # Project Context
 
 ## Purpose
-Data Fusion WebUI is a modern web application built with Nuxt 4 that provides an intuitive interface for data integration, transformation, and fusion operations. The project aims to create a user-friendly web interface for managing data pipelines, visualizing data flows, and orchestrating data fusion processes.
+Data Fusion Hub Web UI delivers the operational dashboard for the Data Fusion platform. It provides a Nuxt-powered admin experience for monitoring high-level KPIs, browsing recent activity, and managing core entities such as customers, inbox conversations, notifications, and team members. The near-term goal is to keep the template production-ready while we progressively replace mocked data with live backend integrations.
 
 ## Tech Stack
-
-### Core Framework
-- **Nuxt 4** (^4.2.1) - Vue 3 meta-framework for full-stack web development
-- **Vue 3** (^3.5.25) - Progressive JavaScript framework for building UI
-- **Vue Router** (^4.6.3) - Official router for Vue.js
-- **TypeScript** (^5.9.3) - Typed superset of JavaScript
-
-### UI & Styling
-- **@nuxt/ui** (^4.2.1) - UI component library for Nuxt
-- **@nuxt/image** (^2.0.0) - Image optimization and handling
-
-### Code Quality & Testing
-- **ESLint** (^9.39.1) - Pluggable JavaScript linter
-- **@nuxt/eslint** (^1.10.0) - Nuxt-specific ESLint configuration
-- **@nuxt/test-utils** (^3.20.1) - Testing utilities for Nuxt applications
-- **@nuxt/hints** (^1.0.0-alpha.2) - Development hints and best practices
-
-### Development Tools
-- **Nuxt DevTools** - Enabled for development debugging and inspection
-- **TypeScript Configuration** - Project references for client/server/shared types
+- Nuxt 4 (Vue 3 + Vite bundler, SSR/ISR capable)
+- TypeScript-first single file components using `<script setup>`
+- `@nuxt/ui` design system with Tailwind CSS theme tokens defined in `app/assets/css/main.css`
+- `@vueuse/nuxt` for composables, shortcuts, and shared state
+- `@unovis/vue` + `@unovis/ts` for charting and data visualizations
+- `date-fns` and `zod` for date utilities and runtime validation when needed
+- PNPM 10 as the package manager; Nuxt requires Node.js 18 or newer for local dev and deployments
 
 ## Project Conventions
 
 ### Code Style
-- **TypeScript First**: All new code should be written in TypeScript with proper type definitions
-- **Vue 3 Composition API**: Prefer Composition API over Options API for new components
-- **File Naming**: Use kebab-case for files (e.g., `data-processor.ts`, `user-card.vue`)
-- **Component Naming**: PascalCase for Vue components, kebab-case in templates
-- **Indentation**: 2 spaces for all files
-- **Semicolons**: Required
-- **Quotes**: Single quotes for strings
+- Compose views with `<script setup lang="ts">` and the Vue Composition API; keep props and emits typed via `~/types` definitions.
+- Follow the Nuxt ESLint preset (`@nuxt/eslint`) with project overrides: allow multiple root nodes, limit Vue attributes to three per line, enforce 1TBS brace style, and disallow dangling commas.
+- Group feature-specific components under `app/components/<feature>` and colocate domain-specific dialogs or modals with their feature.
+- Prefer composables (`app/composables/`) for cross-page state (for example `useDashboard` handles keyboard shortcuts and shared UI flags).
+- Keep styling declarative through `@nuxt/ui` utility classes and the centralized theme tokens in `app/assets/css/main.css` rather than ad-hoc CSS.
 
 ### Architecture Patterns
-
-#### Directory Structure
-```
-app/                      # Nuxt 4 app directory
-├── components/           # Vue components (auto-imported)
-├── composables/          # Vue composables (auto-imported)
-├── layouts/              # Layout components
-├── pages/                # Page components (file-based routing)
-├── plugins/              # Nuxt plugins
-├── server/               # Server-side code (API proxy, auth middleware)
-│   ├── api/              # API proxy endpoints for backend service
-│   ├── middleware/       # Server middleware (auth, logging)
-│   └── utils/            # Server utilities
-├── utils/                # Client-side utilities
-└── app.vue               # Root component
-```
-
-#### Component Architecture
-- **Single Responsibility**: Each component should have one clear purpose
-- **Props/Emits**: Explicitly define props and emits with TypeScript interfaces
-- **Composables**: Extract reusable logic into composables in `app/composables/`
-- **Store Management**: Use Pinia (to be added) for state management
-
-#### API Integration Pattern
-- **Backend Service**: RESTful API at `http://localhost:8000` (production URL TBD)
-- **OpenAPI Documentation**: Available at `http://localhost:8000/openapi.json`
-- **API Client**: Generate TypeScript client from OpenAPI spec for type-safe API calls
-- **Proxy Pattern**: Use Nuxt server API routes to proxy requests to backend service
-- **Authentication**: JWT-based auth with token storage and refresh logic
-- **Error Handling**: Consistent error handling with appropriate HTTP status codes
+- Adopt the Nuxt `app/` directory structure: file-based routing in `app/pages`, global layout scaffolding in `app/layouts`, and configuration via `app/app.config.ts`.
+- Expose lightweight server endpoints under `server/api` that currently return in-memory fixtures; UI code accesses them through `useAsyncData` to smooth the eventual transition to real services.
+- Split components that depend on browser-only APIs into `.client.vue` counterparts (for example `HomeChart.client.vue`) so that SSR can fall back to skeleton placeholders defined in matching `.server.vue` files.
+- Encapsulate shared UI state and macro-interactions (like the notifications slide-over) inside composables built with `createSharedComposable` to keep pages declarative.
+- Keep utility logic centralized in `app/utils` and strongly type data contracts inside `app/types` to minimize duplication.
 
 ### Testing Strategy
-- **Unit Tests**: Test composables and utility functions
-- **Component Tests**: Test Vue components in isolation
-- **E2E Tests**: Test critical user flows (to be implemented)
-- **Type Testing**: Leverage TypeScript for compile-time type checking
-- **API Mocking**: Mock backend API responses for frontend testing
+- Required local quality gates: `pnpm lint` (ESLint) and `pnpm typecheck` (Vue TSC) must pass before opening or merging pull requests.
+- No automated unit or end-to-end suites are wired up yet; perform manual smoke testing across the Home, Customers, Inbox, and Settings views before shipping.
+- Document reproduction steps for bugs and backfill automated coverage (likely with Vitest + Playwright) as we integrate real APIs.
 
 ### Git Workflow
-- **Main Branch**: `main` (protected)
-- **Feature Branches**: `feature/description` or `issue-123-description`
-- **Commit Convention**: Conventional Commits (feat:, fix:, docs:, style:, refactor:, test:, chore:)
-- **Pull Requests**: Required for all changes to main branch
-- **Code Review**: All PRs require at least one review
+- Work on short-lived feature branches named with a verb-led prefix (for example `feat/sbadmin_layout`) branched from the default trunk (`main`).
+- Open pull requests for review rather than pushing directly to `main`; include links to relevant OpenSpec changes when applicable.
+- Keep commits focused and descriptive; Conventional Commit prefixes (`feat:`, `fix:`, etc.) are encouraged but not enforced.
+- Before pushing, run `pnpm lint` and `pnpm typecheck` to catch regressions early and avoid breaking the shared branch.
 
 ## Domain Context
-
-### Data Fusion Concepts
-- **Data Sources**: Various input sources (databases, APIs, files)
-- **Transformations**: Data cleaning, mapping, and transformation operations
-- **Fusion Rules**: Logic for combining data from multiple sources
-- **Pipelines**: Sequences of operations for data processing
-- **Schedules**: Time-based or event-based pipeline execution
-
-### User Roles
-- **Data Engineers**: Create and manage data pipelines
-- **Data Analysts**: Monitor data quality and pipeline performance
-- **Administrators**: Manage users, permissions, and system configuration
+- The dashboard surfaces operational insights for Data Fusion Hub: revenue snapshots, inbox triage, customer subscription health, and team administration workflows.
+- Current data is mocked within the repo (`server/api/*.ts`) to enable rapid UI iteration; downstream work will swap these handlers for real service integrations while preserving the same shape.
+- Navigation shortcuts (for example `g-h`, `g-i`, `g-c`, `g-s`) are part of the UX contract and should continue to work as routes evolve.
 
 ## Important Constraints
-
-### Technical Constraints
-- **Browser Support**: Modern browsers (Chrome, Firefox, Safari, Edge - last 2 versions)
-- **Performance**: Initial page load should be under 3 seconds on 3G
-- **Accessibility**: WCAG 2.1 AA compliance
-- **Security**: All API endpoints must implement proper authentication/authorization
-- **Backend Dependency**: Frontend requires backend service to be running on localhost:8000 during development
-
-### Development Constraints
-- **Type Safety**: No `any` types without explicit justification
-- **Documentation**: All public functions and components must have JSDoc comments
-- **Dependencies**: Minimize external dependencies, prefer Nuxt/Vue ecosystem
-- **API Contract**: Frontend must stay in sync with backend OpenAPI specification
+- Maintain compatibility with Nuxt 4’s expectations (Node 18+, ESM modules, Nitro serverless targets) when introducing dependencies or build tooling.
+- Keep the design aligned with the Nuxt UI theme palette (green primary, zinc neutrals) configured in `app/app.config.ts` and `app/assets/css/main.css` to protect brand consistency.
+- API routes under `/api/**` currently enable CORS; future backend integrations must respect cross-origin access for external tooling and should remain stateless to stay deployable on edge runtimes.
+- Prefer lightweight front-end only solutions unless the change explicitly requires backend logic—backend services are owned by a separate repository.
 
 ## External Dependencies
-
-### Backend Service
-- **RESTful API**: Backend service providing data fusion operations
-- **OpenAPI/Swagger**: API documentation available at `/openapi.json`
-- **Base URL**: `http://localhost:8000` (development), production URL TBD
-- **Authentication**: JWT token-based authentication
-- **Technology**: Python-based backend (FastAPI/Flask/Django - TBD)
-
-### Development Infrastructure
-- **Package Management**: npm
-- **Version Control**: GitHub
-- **CI/CD**: GitHub Actions
-- **Hosting**: TBD (likely Vercel, Netlify, or AWS for frontend)
-- **Backend Hosting**: TBD (separate from frontend hosting)
-
-## Development Commands
-
-```bash
-# Install dependencies
-npm install
-
-# Development server (frontend only)
-npm run dev
-
-# Development with backend (run in separate terminal)
-# Backend must be running on http://localhost:8000
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
-
-# Generate static site
-npm run generate
-```
-
-## Backend Integration
-
-### Local Development Setup
-1. Start backend service on `http://localhost:8000`
-2. Verify OpenAPI documentation at `http://localhost:8000/openapi.json`
-3. Start frontend development server with `npm run dev`
-4. Frontend will proxy API requests to backend service
-
-### API Client Generation
-- Generate TypeScript client from OpenAPI spec for type-safe API integration
-- Store generated client in `app/lib/api-client/` or similar location
-- Regenerate client when backend OpenAPI spec changes
-
-### Environment Configuration
-- Development: `http://localhost:8000`
-- Staging: TBD
-- Production: TBD
-
-## Future Considerations
-
-### Planned Features
-- Real-time data pipeline monitoring
-- Visual workflow builder
-- Data quality metrics dashboard
-- Role-based access control
-- Audit logging
-- Export/import pipeline configurations
-
-### Scalability
-- Modular architecture to support plugin system
-- Microservices-ready design for backend separation
-- Support for horizontal scaling of data processing
-- CDN integration for static assets
+- `@nuxt/ui` component library (and its Tailwind theme) provides the design system primitives; breaking changes there require coordinated updates.
+- `@vueuse/nuxt` supplies composables relied upon for shortcuts, shared state, and reactivity utilities.
+- `@unovis/vue` + `@unovis/ts` render the dashboard charts; upgrades may require adjusting chart configuration objects.
+- Static imagery uses `https://i.pravatar.cc` for avatar placeholders—replace with internal media service before production roll-out.
+- No production backend is wired in yet; planned integrations will consume Data Fusion Hub APIs exposed by the core platform services.
