@@ -22,12 +22,50 @@ const links = [[{
     open.value = false
   }
 }, {
-  label: 'Customers',
+  label: 'Users',
   icon: 'i-lucide-users',
-  to: '/customers',
+  to: '/users',
   onSelect: () => {
     open.value = false
   }
+}, {
+  label: 'Catalog Managers',
+  to: '/catalog_managers',
+  icon: 'i-lucide-combine',
+  defaultOpen: true,
+  type: 'trigger',
+  children: [{
+    label: 'General',
+    to: '/catalog_managers',
+    exact: true,
+    onSelect: () => {
+      open.value = false
+    }
+  }, {
+    label: 'Connectors',
+    to: '/catalog_managers/dataconnectors',
+    onSelect: () => {
+      open.value = false
+    }
+  }, {
+    label: 'Domains',
+    to: '/catalog_managers/datadomains',
+    onSelect: () => {
+      open.value = false
+    }
+  }, {
+    label: 'Objects',
+    to: '/catalog_managers/dataobjects',
+    onSelect: () => {
+      open.value = false
+    }
+  }, {
+    label: 'Security',
+    to: '/catalog_managers/security',
+    onSelect: () => {
+      open.value = false
+    }
+  }]
 }, {
   label: 'Settings',
   to: '/settings',
