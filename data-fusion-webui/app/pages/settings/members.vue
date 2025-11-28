@@ -1,14 +1,31 @@
 <script setup lang="ts">
 import type { Member } from '~/types'
+import type { PlatformUser } from '~/types/platform'
+import { platformUserToMember } from '~/utils'
 
-const { data: members } = await useFetch<Member[]>('/api/members', { default: () => [] })
+const { listUsers } = usePlatformApi()
+
+const { data: platformUsers, status, error } = await useAsyncData<PlatformUser[]>(
+  'settings-platform-users',
+  () => listUsers(),
+  { default: () => [] }
+)
 
 const q = ref('')
 
+const members = computed<Member[]>(() => {
+  return (platformUsers.value ?? []).map(platformUserToMember)
+})
+
 const filteredMembers = computed(() => {
-  return members.value.filter((member) => {
-    return member.name.search(new RegExp(q.value, 'i')) !== -1 || member.username.search(new RegExp(q.value, 'i')) !== -1
-  })
+  const query = q.value.trim()
+  if (!query) {
+    return members.value
+  }
+
+  const matcher = new RegExp(query, 'i')
+
+  return members.value.filter((member) => matcher.test(member.name) || matcher.test(member.username))
 })
 </script>
 
@@ -39,7 +56,22 @@ const filteredMembers = computed(() => {
         />
       </template>
 
-      <SettingsMembersList :members="filteredMembers" />
+      <div
+        v-if="status === 'pending'"
+        class="p-4 text-sm text-muted"
+      >
+        Loading members…
+      </div>
+      <div
+        v-else-if="error"
+        class="p-4 text-sm text-error"
+      >
+        Unable to load members from the platform API.
+      </div>
+      <SettingsMembersList
+        v-else
+        :members="filteredMembers"
+      />
     </UPageCard>
   </div>
 </template>
